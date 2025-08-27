@@ -1,48 +1,20 @@
-import { useEffect, useState, useRef } from "react";
+import { useState, useEffect } from "react";
 
-/**
- * useLocalStorage — JSON-safe, cross-tab syncing, key-scoped.
- * - Persists value under `key`.
- * - Updates reactively if another tab changes the same key.
- */
 export default function useLocalStorage(key, initialValue) {
-  const ready = useRef(false);
-
-  const readValue = () => {
+  const [value, setValue] = useState(() => {
     try {
-      const raw = localStorage.getItem(key);
-      return raw != null ? JSON.parse(raw) : initialValue;
+      const item = window.localStorage.getItem(key);
+      return item ? JSON.parse(item) : initialValue;
     } catch {
       return initialValue;
     }
-  };
+  });
 
-  const [value, setValue] = useState(readValue);
-
-  // Write-through to localStorage
   useEffect(() => {
-    if (!ready.current) return; // avoid writing the initial state twice
     try {
-      localStorage.setItem(key, JSON.stringify(value));
-      // Dispatch a custom event for same-tab subscribers
-      window.dispatchEvent(new Event("localstorage-custom"));
+      window.localStorage.setItem(key, JSON.stringify(value));
     } catch {}
   }, [key, value]);
-
-  // Initial mount mark
-  useEffect(() => { ready.current = true; }, []);
-
-  // Cross-tab or same-tab notifications
-  useEffect(() => {
-    const handler = () => setValue(readValue());
-    window.addEventListener("storage", handler);
-    window.addEventListener("localstorage-custom", handler);
-    return () => {
-      window.removeEventListener("storage", handler);
-      window.removeEventListener("localstorage-custom", handler);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]);
 
   return [value, setValue];
 }

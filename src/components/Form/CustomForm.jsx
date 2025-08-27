@@ -4,8 +4,22 @@ import TextInput from "../inputs/TextInput";
 import Checkbox from "../Checkbox";
 import Radio from "../inputs/Radio";
 import Textarea from "../inputs/Textarea";
-import { personSchema } from "../../utils/validations";
+import * as Yup from "yup";
 import useLocalStorage from "../../hooks/useLocalStorage";
+
+// ✅ Fixed validation schema with proper email regex
+export const personSchema = Yup.object().shape({
+  name: Yup.string().required("Name is required"),
+  email: Yup.string()
+    .required("Email is required")
+    .matches(
+      /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/,
+      "Invalid email format"
+    ),
+  role: Yup.string().required("Role is required"),
+  agree: Yup.boolean().oneOf([true], "You must agree to continue"),
+  about: Yup.string(),
+});
 
 /**
  * Props:
@@ -14,7 +28,11 @@ import useLocalStorage from "../../hooks/useLocalStorage";
 export default function CustomForm({ onAdd }) {
   // Persist draft so user doesn't lose data on refresh
   const [draft, setDraft] = useLocalStorage("form.draft", {
-    name: "", email: "", role: "user", agree: false, about: "",
+    name: "",
+    email: "",
+    role: "user",
+    agree: false,
+    about: "",
   });
 
   useEffect(() => {
@@ -24,7 +42,6 @@ export default function CustomForm({ onAdd }) {
 
   return (
     <div className="card">
-      <h3 style={{ marginTop: 0 }}>Create Person</h3>
       <Formik
         initialValues={draft}
         validationSchema={personSchema}
@@ -33,13 +50,24 @@ export default function CustomForm({ onAdd }) {
           const payload = { id: Date.now(), ...values };
           onAdd?.(payload);
           resetForm();
-          setDraft({ name: "", email: "", role: "user", agree: false, about: "" });
+          setDraft({
+            name: "",
+            email: "",
+            role: "user",
+            agree: false,
+            about: "",
+          });
         }}
       >
-        {({ values, isSubmitting }) => (
+        {({ values, isSubmitting, resetForm }) => (
           <Form className="stack">
             <TextInput name="name" label="Full name" placeholder="Jane Doe" />
-            <TextInput name="email" type="email" label="Email" placeholder="jane@example.com" />
+            <TextInput
+              name="email"
+              type="email"
+              label="Email"
+              placeholder="jane@example.com"
+            />
 
             <div>
               <div className="label">Role</div>
@@ -49,22 +77,41 @@ export default function CustomForm({ onAdd }) {
               </div>
             </div>
 
-            <Textarea name="about" label="About" placeholder="Short bio (optional)" />
+            <Textarea
+              name="about"
+              label="About"
+              placeholder="Short bio (optional)"
+            />
             <Checkbox name="agree" label="I agree to the terms" />
 
             <div className="row">
-              <button type="submit" className="btn primary" disabled={isSubmitting}>Add</button>
+              <button
+                type="submit"
+                className="btn primary"
+                disabled={isSubmitting}
+              >
+                Add
+              </button>
               <button
                 type="button"
                 className="btn ghost"
-                onClick={() => setDraft({ name: "", email: "", role: "user", agree: false, about: "" })}
+                onClick={() => {
+                  resetForm();
+                  setDraft({
+                    name: "",
+                    email: "",
+                    role: "user",
+                    agree: false,
+                    about: "",
+                  });
+                }}
               >
                 Clear Draft
               </button>
             </div>
 
             {/* Auto-save draft */}
-            <AutoSaver values={values} onSave={(v)=> setDraft(v)} />
+            <AutoSaver values={values} onSave={(v) => setDraft(v)} />
           </Form>
         )}
       </Formik>

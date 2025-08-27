@@ -5,27 +5,29 @@ import Pagination from "../components/Pagination/Pagination";
 import ImageDragDrop from "../components/DragDrop/ImageDragDrop";
 
 export default function Home() {
-  const [items, setItems] = useLocalStorage("items", []); // [{id, name, email, role, ...}]
+  const [items, setItems] = useLocalStorage("items", []);
 
   const handleAdd = (person) => {
-    setItems(prev => [person, ...prev]);
+    setItems((prev) => [person, ...prev]);
   };
 
   const clearAll = () => {
-    if (window.confirm("Clear all saved items?")) setItems([]);
+    if (window.confirm("Clear all saved items?")) {
+      setItems([]); // ✅ clears state + localStorage
+    }
   };
 
   return (
     <div className="stack">
       <div className="row" style={{ justifyContent: "space-between" }}>
-        <h2 style={{ margin: 0 }}>All Features</h2>
-        <button className="btn" onClick={clearAll}>Clear Items</button>
+        <h2 style={{ margin: 0 }}>Registration Form</h2>
+        <button className="btn" onClick={clearAll}>
+          Clear Items
+        </button>
       </div>
 
-      {/* 1) Form — adds items */}
       <CustomForm onAdd={handleAdd} />
 
-      {/* 2) Table + Pagination of form items */}
       <Pagination
         items={items}
         pageSize={5}
@@ -38,9 +40,7 @@ export default function Home() {
         )}
       />
 
-      {/* 3) Drag & Drop images */}
       <ImageDragDrop />
     </div>
   );
 }
-
